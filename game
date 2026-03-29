@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract NumberGuess {
+    address public immutable owner;
+    uint256 private secret;
+    bool public isPlaying;
+
+    event NewGame(uint256 indexed seed);
+    event GuessAttempt(address player, uint256 guess, bool success);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function startGame() external onlyOwner {
+        secret = (block.prevrandao + block.timestamp) % 50 + 1;
+        isPlaying = true;
+        emit NewGame(secret);
+    }
+
+    function guess(uint256 n) external returns (bool) {
+        require(isPlaying, "Game not started");
+        bool ok = n == secret;
+        if (ok) isPlaying = false;
+        emit GuessAttempt(msg.sender, n, ok);
+        return ok;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+}
